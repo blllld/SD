@@ -69,7 +69,11 @@ scene.position.copy(SomeObject.position)
 ## `SD.useControl`
 * `.Trackball()` 轨迹球控制器
 
-# `SD.open*Helper`
+# 3. `SD.open*Helper`
 * `openLightHelper()`  打开光照辅助效果
 * `openCameraHelper()` 打开相机辅助效果
 
+# 4. `SD.render()` 
+手动调用单次渲染
+# 5. `SD.automatic()` 
+调用requestAnimationFrame 循环渲染，提供`control.update()`
