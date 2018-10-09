@@ -180,6 +180,7 @@
             return new THREE.CatmullRomCurve3(base.Vector3Array.apply(null,arguments))
         }
     }
+    SD.base = base;
     /**
      * 几何
      */
