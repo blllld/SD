@@ -49,10 +49,27 @@ scene.position.copy(SomeObject.position)
 # 2. `SD.use*` 
 * `useCamera` 相机
 * `useRenderer` 渲染器
-* `useControl` 控制器
 * `useLight` 灯光
+* `useControl` 控制器
 
 ## `SD.useCamera`
-* `SD.useCamera.Perspective()` 
+* `.Perspective()` 
 
 等价于 `new THREE.PerspectiveCamera()`,传递相同的参数列表，挂载OBJECT对象上的字段为`camera`，`OBJECT.cameraIntroduce`提供相机说明
+
+## `SD.useRenderer` 
+* `.WebGL()` 目前内置直接安插到body中去，使用window的size作为canvas的size
+
+## `SD.useLight`
+
+* `.Directional()`  定向光
+* `.Ambient()` 环境光
+* `.Point()` 点光
+
+## `SD.useControl`
+* `.Trackball()` 轨迹球控制器
+
+# `SD.open*Helper`
+* `openLightHelper()`  打开光照辅助效果
+* `openCameraHelper()` 打开相机辅助效果
+
