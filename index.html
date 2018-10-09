@@ -5,14 +5,70 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Document</title>
-    <script src="https://github.com/mrdoob/three.js/blob/dev/build/three.min.js"></script>
-    <script src="https://github.com/mrdoob/three.js/blob/dev/examples/js/controls/TrackballControls.js"></script>
-    <script src="https://github.com/blllld/SD/blob/master/sd.js"></script>
+    <script src="http://raw.githack.com/mrdoob/three.js/dev/build/three.min.js"></script>
+    <script src="http://raw.githack.com/mrdoob/three.js/dev/examples/js/controls/TrackballControls.js"></script>
+    <script src="http://raw.githack.com/blllld/SD/master/sd.js"></script>
 </head>
 <body>
     <script>
-    
-    
+    startAtScene()
+        .set('background',0x222222)
+    .useRenderer
+        .WebGL()
+            .set('setPixelRatio',[window.devicePixelRatio])
+    .useCamera
+        .Perspective(45,window.innerWidth/window.innerHeight,1,1e3)
+            .set('position.set',[0,0,500])
+    .useControl
+        .Trackball()
+            .setAll({
+                minDistance:200,
+                maxDistance:500
+            })
+    .useLight
+        .Point(0xffffff)
+            .copy('position',function(object){                
+                return object.camera.position
+            })
+    .buildMesh(function(createGeometry,createMaterial){
+        createGeometry
+            .ExtrudeBuffer(
+                function(base){
+                    var pts = [],count=3;
+                    for(var i =0;i<count;i++){
+                        var l=20;
+                        var a = 2 * i / count * Math.PI;
+                        pts.push(
+                            base.Vector2(
+                                Math.cos(a) * l, Math.sin(a) * l
+                            )
+                        )
+                    }
+                    return pts;
+                },
+                function(base){
+                    var closedSpline = base.CatmullRomCurve3(
+                        [-60,-100,60],
+                        [-60,20,60],
+                        [-60,120,60],
+                        [60,20,-60],
+                        [60,-100,-60]
+                    );
+                    closedSpline.curveType='catmullrom';
+                    closedSpline.closed = true;
+                    return {
+                        steps:1e3,
+                        bevelEnabled:false,
+                        extrudePath:closedSpline
+                    }
+                }
+            );
+            createMaterial.MeshLambert({
+                color:0xb00000,
+                wireframe:false
+            })
+    })
+    .automatic()
     </script>
 </body>
 </html>
