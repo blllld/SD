@@ -26,7 +26,7 @@
     SD.copy = function (propname, callback) {
         if (typeof callback === 'function') {
             var value = callback(OBJECT);
-            value !== undefined && SD.set(propname+".copy", value)
+            value !== undefined && SD.set(propname + ".copy", value)
         }
         return SD;
     }
@@ -59,6 +59,13 @@
         }
         return SD;
     }
+    SD.fn = function (name, fn) {
+        SD[name] = function () {
+            fn.apply(SD, arguments)
+            return SD
+        };
+        return SD;
+    }
     SD.setAll = function (props) {
         Object.entries(props).forEach(function (entry) {
             SD.set.apply(null, entry)
@@ -70,10 +77,19 @@
      */
     SD.useControl = {
         Trackball: function () {
-            if(THREE.TrackballControls){
+            if (THREE.TrackballControls) {
                 recent = OBJECT.control = new THREE.TrackballControls(OBJECT.camera, OBJECT.renderer.domElement)
-            }else{
+            } else {
                 console.error("没有引入『TrackballControls.js』")
+            }
+            return SD;
+        },
+        FirstPerson: function () {
+            if (THREE.FirstPersonControls) {
+                recent = OBJECT.control = new THREE.FirstPersonControls(OBJECT.camera, OBJECT.renderer.domElement)
+                OBJECT.clock = new THREE.Clock()
+            } else {
+                console.error("没有引入『FirstPersonControls.js』")
             }
             return SD;
         }
@@ -177,7 +193,7 @@
          * 抗锯齿算法创建平滑曲线
          */
         CatmullRomCurve3: function () {
-            return new THREE.CatmullRomCurve3(base.Vector3Array.apply(null,arguments))
+            return new THREE.CatmullRomCurve3(base.Vector3Array.apply(null, arguments))
         }
     }
     top.SDbase = base;
@@ -199,6 +215,14 @@
             }
             recent = geometry = new THREE.ExtrudeBufferGeometry(shapes, options);
             return SD;
+        },
+        Sphere: function (radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength) {
+            recent = geometry = new THREE.SphereGeometry(radius, widthSegments, heightSegments, phiStart, phiLength, thetaStart, thetaLength);
+            return SD;
+        },
+        Ring: function (innerRadius, outerRadius, thetaSegments, phiSegments, thetaStart, thetaLength) {
+            recent = geometry = new THREE.RingGeometry(innerRadius, outerRadius, thetaSegments, phiSegments, thetaStart, thetaLength);
+            return SD;
         }
     },
         /**
@@ -212,17 +236,58 @@
             MeshLambert: function (parameters) {
                 recent = material = new THREE.MeshLambertMaterial(parameters);
                 return SD
+            },
+            MeshBasic: function (parameters) {
+                recent = material = new THREE.MeshBasicMaterial(parameters);
+                return SD
             }
         }
-
+    var idNumber = 0;
+    OBJECT.Meshes = Object.create(null) // 提供名称的mesh
+    var groupModelNames = [],
+     lastname,// 上一次使用过的名字
+     cacheName; // 分组mesh
+    groups = []
     /**
      * 网格孔
      * @param {function}} callback 
      */
     SD.buildMesh = function (callback) {
-        callback(createGeometry, createMaterial)
-        recent = OBJECT.mesh = new THREE.Mesh(geometry, material)
-        OBJECT.scene.add(OBJECT.mesh)
+        var result = callback(createGeometry, createMaterial)
+        var mesh = recent = new THREE.Mesh(geometry, material)
+        if (groupModelNames.length > 0) {
+            // 目前处于分组创建模式下
+            // 分组模式下不可以设置名称
+            // 即result返回值为object
+
+            groups.push(Object.assign({ Mesh: mesh }, result))
+
+        } else if (typeof result === 'string') {
+            // 返回mesh名称
+            OBJECT.Meshes[result] = recent;
+        } else {
+            // 未设置分组名称
+            OBJECT.Meshes["noname_" + idNumber++] = recent
+        }
+        OBJECT.scene.add(recent)
+        return SD;
+    }
+    SD.done = function () {
+        var group = groupModelNames.pop()
+        OBJECT.Meshes[group.name] = group.group;
+    }
+    var buildMeshes = {
+        group: function () {
+            groupModelNames.push({ name: cacheName,  group: []  });
+            return SD;
+        }
+    }
+    SD.buildMeshGroup = function (name, callback) {
+        if(groupModelNames.length>1){
+            lastname = cacheName
+        }
+        cacheName = name;
+        callback.call(buildMeshes, name)
         return SD;
     }
     SD.render = function () {
@@ -235,13 +300,14 @@
     function automatic() {
         if (isAutoMatic) {
             if (typeof callback === 'function') {
-                callback(SD);
+                callback(SD, OBJECT);
             }
-            requestAnimationFrame(automatic)
+
             if (OBJECT.control) {
-                OBJECT.control.update();
+                OBJECT.control.update(OBJECT.clock && OBJECT.clock.getDelta());
             }
             SD.render();
+            requestAnimationFrame(automatic)
         }
     }
     SD.automatic = function (call) {
@@ -254,5 +320,6 @@
     SD.stop = function () {
         isAutoMatic = false;
     }
+    SD.OBJECT = OBJECT
     top.startAtScene = createScene
 })(this)
